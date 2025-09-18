@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: f_inventory_stock
+    description: "Fact table for inventory stock, including product details, stock levels, and transaction aggregates."
+    columns:
+      - name: product_id
+        description: "Unique identifier for the product."
+      - name: product_name
+        description: "Name of the product."
+      - name: warehouse_location
+        description: "Location of the warehouse."
+      - name: quantity_on_hand
+        description: "Current quantity of product on hand."
+      - name: minimum_stock_level
+        description: "Minimum stock level for the product."
+      - name: maximum_stock_level
+        description: "Maximum stock level for the product."
+      - name: total_receipts
+        description: "Total quantity received for the product."
+      - name: total_shipments
+        description: "Total quantity shipped for the product."
