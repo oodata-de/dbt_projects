@@ -1,0 +1,10 @@
+version: 2
+
+# The staging layer makes the incoming data as usable as possible by adapting the data types, renaming columns, extracting nested objects, and applying hard data fixes.
+# Default record: The default record provides dimensions with a record with default values for all the fields
+# Add hashed keys and generate metadata columns needed
+models:
+  - name: STG_ABC_BANK_POSITION
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: " YEAR(REPORT_DATE) >= 2000 "
