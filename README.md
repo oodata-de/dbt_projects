@@ -53,7 +53,7 @@ To make these changes persistent, add the lines to your PowerShell profile scrip
 | `dbt test -s source:abc_bank.*` | Run the tests on all the tables in the abc_bank source |
 | `dbt snapshot` | Run all snapshots. |
 | `dbt snapshot -s customer_snapshot` | Create a specified snapshot. |
-| `dbt run-operation macro_name` | Run a macro from the CLI. |
+| `dbt run-operation grant_select --args '{role: reporter}'` | Run a macro from the CLI. Used to invoke a macro defined within your dbt project or a dbt package |
 | `dbt build -s "resource_type:models"` | Build only models. build = run + test|
 | `dbt build -s STG_ABC_BANK_POSITION+` | Build the specified model and all downstream dependencies. |
 | `dbt docs generate` | Generate documentation. Build catalog and writes to target\catalog.json|
@@ -61,18 +61,9 @@ To make these changes persistent, add the lines to your PowerShell profile scrip
 
 ---
 
-### Lineage Exploration Examples
-
-- To see all models upstream and downstream of a specific model in the docs, use:
-    ```sh
-    --select +model_name+
-    ```
-    This highlights everything that feeds into and is fed by `model_name`.
-
-- To select both upstream and downstream:
-    ```sh
-    --exclude +model_name+
-    ```
+Selection examples:
+- Upstream and downstream of model: `--select +model_name+`
+- Exclude upstream+downstream: `--exclude +model_name+`
 
 ---
 
@@ -108,6 +99,7 @@ This will print `Hello from dbt macro!` in your terminal.
 
 - Data tests are run on objects already in your database. If they fail, you already have the bad data.
 - Tests have the following specific configurations as properties in a YAML file for a generic test, but they can be applied to any tests with a config() block or, generally, in the main config file.
+- Generic test config options: `where`, `severity: error|warn`, `error_if`, `warn_if`, `store_failures`, `limit`.
 <test_name>:
     <argument_name>: <argument_value>
     config:
