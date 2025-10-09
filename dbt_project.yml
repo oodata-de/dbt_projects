@@ -22,6 +22,10 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "target"
   - "dbt_packages"
 
+vars:
+  'dbt_date:time_zone': 'America/Los_Angeles'
+
+on-run-start: "{{ generate_sequences() }}"
 
 # Configuring models
 # Full documentation: https://docs.getdbt.com/docs/configuring-models
@@ -37,37 +41,51 @@ models:
     # Config indicated by + and applies to all files under models/example/
     example:
       +materialized: view
+      +schema: sch_dbt_test
       # +tmp_relation_type: view ##table | view - If not defined, view is the default.
     bronze:
       +materialized: view
       sqlserver:
-        sales:
+        salesdb:
           +schema: sch_bronze_sales
       oracle:
-        inventory:
+        invdb:
           +schema: sch_bronze_inventory
       +docs:
         node_color: "lightblue"
     silver:
       +materialized: table
-      sqlserver:
-        sales:
-          +schema: sch_silver_sales
-      oracle:
-        inventory:
-          +schema: sch_silver_inventory
+      sales:
+        +schema: sch_silver_sales
+      inventory:
+        +schema: sch_silver_inventory
       +docs:
         node_color: "orange"
+
+    intermediate:
+      +materialized: view
+      +schema: sch_intermediate
+      +docs:
+        node_color: "yellow"
+
     gold:
       +materialized: table
       +snowflake_warehouse: "COMPUTE_WH"    # override the default Snowflake virtual warehouse for all models under the `gold` directory.
-      customer:
-        +schema: sch_gold_customer
-      sales:
-        +schema: sch_gold_sales 
-      inventory:
-        +schema: sch_gold_inventory
-      +docs:
-        node_color: "green"
-# snapshots:
-#   +snowflake_warehouse: "COMPUTE_WH"
+      curated:
+        customers:
+          +schema: sch_gold_customer
+        sales:
+          +schema: sch_gold_sales 
+        inventory:
+          +schema: sch_gold_inventory
+        +docs:
+          node_color: "green"
+      reporting:
+        +materialized: table
+        +schema: sch_reporting
+        +docs:
+          node_color: "red"
+
+snapshots:
+  # +snowflake_warehouse: "COMPUTE_WH"
+  +schema: sch_snapshots

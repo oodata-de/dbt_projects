@@ -1,0 +1,64 @@
+erDiagram
+    ADVERTISER ||--o{ CAMPAIGN : runs
+    PUBLISHER ||--o{ CAMPAIGN : hosts
+    CAMPAIGN ||--o{ ADCLICK : includes
+    CAMPAIGN ||--o{ ORDER : attributed_to
+    ADCLICK }o--|| USER : by
+    ORDER }o--|| USER : by
+    ORDER }o--|| PRODUCT : contains
+    ADCLICK }o--|| CAMPAIGN : belongs_to
+    ORDER }o--|| CAMPAIGN : attributed_by
+    USER ||--o{ ADCLICK : clicks
+    USER ||--o{ ORDER : purchases
+    PRODUCT ||--o{ ORDER : sold_in
+    CAMPAIGN ||--o{ PERFORMANCE : measures
+    PERFORMANCE }o--|| CAMPAIGN : for
+
+    ADVERTISER {
+      string AdvertiserID
+      string Name
+    }
+    PUBLISHER {
+      string PublisherID
+      string Name
+    }
+    CAMPAIGN {
+      string CampaignID
+      string ExternalID
+      string Brand
+      string Category
+      string Product
+      string Source
+    }
+    ADCLICK {
+      string ClickID
+      string CampaignID
+      string UserID
+      string CookieID
+      datetime Timestamp
+      string Scope
+    }
+    ORDER {
+      string OrderID
+      string UserID
+      string ProductID
+      string Channel
+      datetime Timestamp
+    }
+    USER {
+      string UserID
+      string CookieID
+      string AccountID
+    }
+    PRODUCT {
+      string ProductID
+      string Brand
+      string Category
+      string Seller
+    }
+    PERFORMANCE {
+      string CampaignID
+      float ROAS
+      int Conversions
+      float Spend
+    }

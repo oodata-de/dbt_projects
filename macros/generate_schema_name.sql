@@ -1,5 +1,7 @@
 {% macro generate_schema_name(custom_schema_name, node) -%}
-    {%- set model_name = node.name -%}
-    {%- set prefix = model_name.split('_')[0] -%}
-    {{ prefix }}
+    {%- if custom_schema_name is none -%}
+        {{ target.schema }}   -- fallback to default if no schema is defined
+    {%- else -%}
+        {{ custom_schema_name | trim }}
+    {%- endif -%}
 {%- endmacro %}

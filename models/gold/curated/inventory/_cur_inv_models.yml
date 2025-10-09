@@ -1,0 +1,42 @@
+version: 2
+
+models:
+  - name: f_inventory_stock
+    description: "Fact table for inventory stock, including product details, stock levels, and transaction aggregates."
+    columns:
+      - name: product_id
+        description: "Unique identifier for the product."
+      - name: product_name
+        description: "Name of the product."
+      - name: warehouse_location
+        description: "Location of the warehouse."
+      - name: quantity_on_hand
+        description: "Current quantity of product on hand."
+      - name: minimum_stock_level
+        description: "Minimum stock level for the product."
+      - name: maximum_stock_level
+        description: "Maximum stock level for the product."
+      - name: total_receipts
+        description: "Total quantity received for the product."
+      - name: total_shipments
+        description: "Total quantity shipped for the product."
+        
+  - name: f_inventory_daily_snapshot
+    description: "Daily snapshot fact table for inventory, capturing product stock levels and movements per day."
+    columns:
+      - name: snapshot_date
+        description: "Date of the inventory snapshot."
+      - name: product_id
+        description: "Unique identifier for the product."
+      - name: product_name
+        description: "Name of the product."
+      - name: warehouse_location
+        description: "Location of the warehouse."
+      - name: opening_quantity
+        description: "Quantity at the start of the day."
+      - name: closing_quantity
+        description: "Quantity at the end of the day."
+      - name: receipts
+        description: "Total quantity received during the day."
+      - name: shipments
+        description: "Total quantity shipped during the day."

@@ -1,0 +1,68 @@
+version: 2
+
+models:
+  - name: stg_salesdb__orders
+    description: "Contains order records"
+    columns:
+      - name: ORDER_ID
+        description: "Unique identifier for the order"
+      - name: CUSTOMER_ID
+        description: "Identifier for the customer who placed the order"
+      - name: ORDER_DATE
+        description: "Date when the order was placed"
+      - name: PRODUCT_ID
+        description: "Identifier for the product ordered"
+      - name: QUANTITY
+        description: "Quantity of the product ordered"
+      - name: AMOUNT
+        description: "Total amount for the order"
+
+  - name: stg_salesdb__customers
+    description: "Contains customer records"
+    columns:
+      - name: CUSTOMER_ID
+        description: "Unique identifier for the customer"
+      - name: FIRST_NAME
+        description: "Customer's first name"
+      - name: LAST_NAME
+        description: "Customer's last name"
+      - name: EMAIL
+        description: "Customer's email address"
+      - name: COUNTRY
+        description: "Customer's country"
+      - name: CREATED_DATE
+        description: "Date the customer was created"
+
+  - name: stg_salesdb__products
+    description: "Contains product records"
+    columns:
+      - name: PRODUCT_ID
+        description: "Unique identifier for the product"
+      - name: PRODUCT_NAME
+        description: "Name of the product"
+      - name: CATEGORY
+        description: "Category of the product"
+      - name: UNIT_PRICE
+        description: "Unit price of the product"
+      - name: IN_STOCK
+        description: "Indicates if the product is in stock"
+
+  - name: stg_salesdb__addresses
+    description: "Contains address records for customers"
+    columns:
+      - name: CUSTOMER_ID
+        description: "Identifier for the customer associated with the address"
+      - name: ADDRESS_ID
+        description: "Unique identifier for the address"
+      - name: ADDRESS_LINE1
+        description: "Primary address line"
+      - name: CITY
+        description: "City of the address"
+      - name: STATE
+        description: "State or province of the address"
+      - name: POSTAL_CODE
+        description: "Postal or ZIP code of the address"
+      - name: COUNTRY
+        description: "Country of the address"
+      - name: ADDRESS_TYPE
+        description: "Type of address (e.g., billing, shipping)"
