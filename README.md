@@ -33,7 +33,9 @@ To make these changes persistent, add the lines to your PowerShell profile scrip
 | Command | Explanation |
 |---------|-------------|
 | `dbt debug` | Test connections; checks profiles and `dbt_project.yml`. |
-| `dbt deps` | Install dependencies/packages; run at the beginning of pipeline. |
+| `dbt deps` | Install dependencies/packages; run at the beginning of pipeline. pulls the most recent version of the dependencies listed in your packages.yml from git. dbt generates a package-lock.yml file in the root of your project. This file records the exact resolved versions (including commit SHAs) of all packages defined in your packages.yml. The package-lock.yml file ensures consistent and repeatable installs across all environments. When you run dbt deps, dbt installs packages based on the versions locked in the package-lock.yml. To maintain consistency, commit the package-lock.yml file to version control. This guarantees consistency across all environments and for all developers|
+| `dbt deps --upgrade` | manually trigger an upgrade of installed packages. This may introduce build inconsistencies unless carefully managed |
+| `dbt deps --add-package dbt-labs/dbt_utils@1.0.0` | add package directly with CLI |
 | `dbt source freshness` | Check freshness of source models. |
 | `dbt seed` | Load seed files to tables, by default, data will be loaded in a table with the same name as the CSV file |
 | `dbt seed --full-refresh` | Reload all seed files, drop and recreate existing tables. |
