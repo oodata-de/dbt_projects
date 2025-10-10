@@ -1,0 +1,11 @@
+
+target/
+dbt_modules/
+dbt_packages/
+logs/
+**/.DS_Store
+
+profiles.yml
+setup.ps1
+.user.yml
+package-lock.yml

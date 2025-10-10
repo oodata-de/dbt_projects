@@ -1,0 +1,8 @@
+version: 2
+
+seeds:
+  - name: ABC_Bank_SECURITY_INFO
+    columns:
+      - name: LOAD_TS
+        tests:
+          - not_null

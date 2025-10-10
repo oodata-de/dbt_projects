@@ -1,0 +1,48 @@
+version: 2
+
+models:
+  - name: prv_salesdb__customers
+    description: "Customers with normalized names, email, and country."
+    columns:
+      - name: customer_id
+        description: "Unique identifier for the customer."
+      - name: first_name
+        description: "Trimmed first name of the customer."
+      - name: last_name
+        description: "Trimmed last name of the customer."
+      - name: email
+        description: "Lowercased and trimmed email address."
+      - name: country
+        description: "Uppercased and trimmed country name."
+      - name: created_date
+        description: "Date the customer record was created."
+
+  - name: prv_salesdb__orders
+    description: "Sales orders with normalized amounts and invalid amount flag."
+    columns:
+      - name: order_id
+        description: "Unique identifier for the order."
+      - name: customer_id
+        description: "Unique identifier for the customer."
+      - name: order_date
+        description: "Date of the order."
+      - name: product_id
+        description: "Unique identifier for the product."
+      - name: quantity
+        description: "Quantity ordered."
+      - name: amount
+        description: "Order amount, NULL if negative."
+      - name: is_invalid_amount
+        description: "Flag indicating if the amount is invalid (negative)."
+        
+  - name: prv_salesdb__products
+    description: "Product details for sales."
+    columns:
+      - name: product_id
+        description: "Unique identifier for the product."
+      - name: product_name
+        description: "Name of the product."
+      - name: category
+        description: "Category of the product."
+      - name: price
+        description: "Price of the product."

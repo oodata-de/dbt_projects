@@ -1,0 +1,106 @@
+
+%% erDiagram
+%%   CUSTOMER ||--o{ PARTY_KEY : "has"
+%%   PARTY_KEY }o--|| CUSTOMER : "maps to (one active)"
+%%   CUSTOMER ||--o{ ACCOUNT : "owns"
+%%   CUSTOMER ||--o{ MEMBERSHIP : "holds"
+%%   ORDER ||--|{ ORDER_LINE : "has lines"
+%%   ORDER }o--|| CHANNEL : "has"
+%%   ORDER }o--|| STORE : "in (if in-store)"
+%%   ORDER }o--|| PARTY_KEY : "captured at checkout"
+%%   ORDER }o--|| ACCOUNT : "paid/placed with (optional)"
+%%   ORDER }o--|| MEMBERSHIP : "credited to (optional)"
+
+
+ erDiagram
+  %% ==== Dimensions ====
+  DIM_CUSTOMER {
+    bigint customer_sk PK
+    bigint customer_durable_key
+    string ucp_entity_id
+    string customer_type
+    string lifecycle_status
+    boolean is_current
+    datetime valid_from
+    datetime valid_to
+  }
+
+  DIM_ACCOUNT {
+    bigint account_sk PK
+    string account_key
+    string account_type
+    string status
+    date opened_dt
+    date closed_dt
+  }
+
+  DIM_MEMBERSHIP {
+    bigint membership_sk PK
+    string membership_key
+    int    program_sk
+    string status
+    string tier
+    date   join_dt
+    date   cancel_dt
+  }
+
+
+  DIM_ORDER_FLAGS {
+    int order_flags_sk PK
+    boolean is_marketplace
+    boolean is_gift
+    boolean is_quick_checkout
+  }
+
+  %% ==== Identity bridge & optional party dim ====
+  BR_PARTYKEY_CUSTOMER {
+    string party_key_value
+    string source_system
+    bigint customer_durable_key
+    boolean is_active
+    datetime start_ts
+    datetime end_ts
+  }
+
+  %% Optional tiny dimension (if not using degenerate)
+  DIM_PARTY_KEY {
+    bigint party_key_sk PK
+    string party_key_value
+    string source_system
+  }
+
+  %% ==== Facts ====
+  %% order_number is degenerate
+  %% customer_sk is resolved
+  %% account_sk is nullable
+  %% membership_sk is nullable
+  %% store_sk is nullable for web
+  %% ship_date_sk is nullable
+  %% return_date_sk is nullable
+  %% captured_party_key is degenerate (or FK to DIM_PARTY_KEY)
+  FACT_ORDER_LINE {
+    string order_number
+    int    line_number
+    datetime order_ts
+    bigint customer_sk
+    bigint account_sk
+    bigint membership_sk
+    int    order_flags_sk
+    string captured_party_key
+    numeric qty
+    numeric unit_price
+    numeric discount_amount
+    numeric tax_amount
+    numeric net_sales_amount
+  }
+
+  %% ==== Relationships ====
+  DIM_CUSTOMER ||--o{ FACT_ORDER_LINE : "by customer_sk"
+  DIM_ACCOUNT  ||--o{ FACT_ORDER_LINE : "by account_sk (opt)"
+  DIM_MEMBERSHIP ||--o{ FACT_ORDER_LINE : "by membership_sk (opt)"
+  DIM_ORDER_FLAGS ||--o{ FACT_ORDER_LINE : "order_flags_sk"
+
+  %% Identity resolution path
+  BR_PARTYKEY_CUSTOMER }o--|| DIM_CUSTOMER : "resolves to current customer"
+  %% If you choose a DIM_PARTY_KEY instead of DD:
+  DIM_PARTY_KEY ||--o{ FACT_ORDER_LINE : "party_key_sk (optional)" 
