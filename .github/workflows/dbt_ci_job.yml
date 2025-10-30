@@ -32,6 +32,9 @@ jobs:
         with:
           python-version: '3.13.5'
 
+      - name: Print working directory
+        run: pwd
+
       - name: Install requirements
         run: pip install -r requirements.txt  
 
