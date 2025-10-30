@@ -36,7 +36,7 @@ jobs:
         run: pip install -r requirements.txt  
 
       - name: Set DBT project directory
-        run: echo "DBT_PROJECT_DIR=$GITHUB_WORKSPACE/dbt_projects/dbt_demo_core" >> $GITHUB_ENV
+        run: echo "DBT_PROJECT_DIR=$GITHUB_WORKSPACE/dbt_demo_core" >> $GITHUB_ENV
 
       - name: Set DBT profiles directory
         run: echo "DBT_PROFILES_DIR=$GITHUB_WORKSPACE/" >> $GITHUB_ENV
@@ -60,6 +60,9 @@ jobs:
             "$( [ -n \"$SNOWFLAKE_PRIVATE_KEY_PATH\" ] && printf '      private_key_path: \"%s\"\n' \"$SNOWFLAKE_PRIVATE_KEY_PATH\" )" \
             > "$PROFILE_PATH"
           echo "Wrote $PROFILE_PATH"
+
+      - name: CHnage to directory
+        run: cd $DBT_PROJECT_DIR
 
       - name: Check connection
         run: dbt debug --profile dbt_demo_core 
