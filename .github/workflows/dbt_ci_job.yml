@@ -44,6 +44,16 @@ jobs:
       - name: Set DBT profiles directory
         run: echo "DBT_PROFILES_DIR=$GITHUB_WORKSPACE/" >> $GITHUB_ENV
 
+      - name: Create private key file
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/.secrets"
+          # preserve newlines safely
+          printf '%s' "$SNOWFLAKE_PRIVATE_KEY" > "$GITHUB_WORKSPACE/.secrets/snowflake_key.p8"
+          chmod 600 "$GITHUB_WORKSPACE/.secrets/snowflake_key.p8"
+          # expose the path to subsequent steps
+          echo "SNOWFLAKE_PRIVATE_KEY_PATH=$GITHUB_WORKSPACE/.secrets/snowflake_key.p8" >> $GITHUB_ENV
+        shell: bash
+
       - name: Create profiles.yml (dynamic)
         run: |
           PROFILE_PATH="$GITHUB_WORKSPACE/profiles.yml"
@@ -60,7 +70,7 @@ jobs:
             "      database: \"${SNOWFLAKE_DB}\"" \
             "      warehouse: \"${SNOWFLAKE_WAREHOUSE}\"" \
             "      schema: \"${SNOWFLAKE_SCHEMA}\"" \
-            "$( [ -n \"$SNOWFLAKE_PRIVATE_KEY\" ] && printf '      private_key_path: \"%s\"\n' \"${SNOWFLAKE_PRIVATE_KEY}\" )" \
+            "$( [ -n \"$SNOWFLAKE_PRIVATE_KEY_PATH\" ] && printf '      private_key_path: \"%s\"\\n' \"$SNOWFLAKE_PRIVATE_KEY_PATH\" )" \
             > "$PROFILE_PATH"
           echo "Wrote $PROFILE_PATH"
 
