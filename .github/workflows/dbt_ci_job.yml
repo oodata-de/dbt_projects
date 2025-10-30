@@ -1,0 +1,71 @@
+name: dbt PR job
+
+on:
+  pull_request:
+    types:
+    - opened
+    - reopened
+    - synchronize
+    - ready_for_review
+  push:
+    branches:
+      - '!main'
+
+jobs:
+  dbt_ci:
+    runs-on: ubuntu-latest
+    env:
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+      SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+      SNOWFLAKE_DB: ${{ secrets.SNOWFLAKE_DB }}
+      SNOWFLAKE_SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
+      SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+      SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Set Up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.13.5'
+
+      - name: Install requirements
+        run: pip install -r requirements.txt  
+
+      - name: Set DBT project directory
+        run: echo "DBT_PROJECT_DIR=$GITHUB_WORKSPACE/dbt_projects/dbt_demo_core" >> $GITHUB_ENV
+
+      - name: Set DBT profiles directory
+        run: echo "DBT_PROFILES_DIR=$GITHUB_WORKSPACE/" >> $GITHUB_ENV
+
+      - name: Create profiles.yml (dynamic)
+        run: |
+          PROFILE_PATH="$GITHUB_WORKSPACE/profiles.yml"
+          # write with printf to avoid YAML-leading-space problems from the workflow indentation
+          printf '%s\n' \
+            "dbt_demo_core:" \
+            "  target: ci" \
+            "  outputs:" \
+            "    ci:" \
+            "      type: snowflake" \
+            "      account: \"${SNOWFLAKE_ACCOUNT}\"" \
+            "      user: \"${SNOWFLAKE_USER}\"" \
+            "      role: \"${SNOWFLAKE_ROLE}\"" \
+            "      database: \"${SNOWFLAKE_DB}\"" \
+            "      warehouse: \"${SNOWFLAKE_WAREHOUSE}\"" \
+            "      schema: \"${SNOWFLAKE_SCHEMA}\"" \
+            "$( [ -n \"$SNOWFLAKE_PRIVATE_KEY_PATH\" ] && printf '      private_key_path: \"%s\"\n' \"$SNOWFLAKE_PRIVATE_KEY_PATH\" )" \
+            > "$PROFILE_PATH"
+          echo "Wrote $PROFILE_PATH"
+
+      - name: Check connection
+        run: dbt debug --profile dbt_demo_core 
+
+      - name: Install dbt dependencies
+        run: dbt deps
+
+      - name: dbt build
+        run: dbt build --select path:models/example/dependency   #--full-refresh --profiles-dir ./
