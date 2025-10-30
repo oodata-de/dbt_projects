@@ -60,7 +60,7 @@ jobs:
             "      database: \"${SNOWFLAKE_DB}\"" \
             "      warehouse: \"${SNOWFLAKE_WAREHOUSE}\"" \
             "      schema: \"${SNOWFLAKE_SCHEMA}\"" \
-            "$( [ -n \"$SNOWFLAKE_PRIVATE_KEY_PATH\" ] && printf '      private_key_path: \"%s\"\n' \"$SNOWFLAKE_PRIVATE_KEY_PATH\" )" \
+            "$( [ -n \"$SNOWFLAKE_PRIVATE_KEY\" ] && printf '      private_key_path: \"%s\"\n' \"${SNOWFLAKE_PRIVATE_KEY}\" )" \
             > "$PROFILE_PATH"
           echo "Wrote $PROFILE_PATH"
 
