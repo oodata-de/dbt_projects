@@ -36,7 +36,7 @@ To make these changes persistent, add the lines to your PowerShell profile scrip
 | `dbt deps` | Install dependencies/packages; run at the beginning of pipeline. pulls the most recent version of the dependencies listed in your packages.yml from git. dbt generates a package-lock.yml file in the root of your project. This file records the exact resolved versions (including commit SHAs) of all packages defined in your packages.yml. The package-lock.yml file ensures consistent and repeatable installs across all environments. When you run dbt deps, dbt installs packages based on the versions locked in the package-lock.yml. To maintain consistency, commit the package-lock.yml file to version control. This guarantees consistency across all environments and for all developers|
 | `dbt deps --upgrade` | manually trigger an upgrade of installed packages. This may introduce build inconsistencies unless carefully managed |
 | `dbt deps --add-package dbt-labs/dbt_utils@1.0.0` | add package directly with CLI |
-| `dbt source freshness` | Check freshness of source models. |
+| `dbt source freshness` | Check freshness of source models. Behind the scenes, dbt uses the freshness properties to construct a select query|
 | `dbt seed` | Load seed files to tables, by default, data will be loaded in a table with the same name as the CSV file |
 | `dbt seed --full-refresh` | Reload all seed files, drop and recreate existing tables. |
 | `dbt run` | Run all models. |
@@ -57,15 +57,61 @@ To make these changes persistent, add the lines to your PowerShell profile scrip
 | `dbt snapshot -s customer_snapshot` | Create a specified snapshot. |
 | `dbt run-operation grant_select --args '{role: reporter}'` | Run a macro from the CLI. Used to invoke a macro defined within your dbt project or a dbt package |
 | `dbt build -s "resource_type:models"` | Build only models. build = run + test|
+| `dbt build -s state:modified+` | Build all modeified models and everythign downstream. More relevant for CI/ testing during development. Avoid rebuilding entore dbt projects. In CI, dbt clone forst before run eg  `dbt clone --select state:modified+, config.materialized:incremental,state:old` |
+| `dbt build --select source_status:fresher+` |build and test models downstream of fresher sources. Run dbt source freshness first. Using these commands in order makes sure models update with the latest data. This eliminates wasted compute cycles on unchanged data and builds models only when necessary.|
 | `dbt build -s STG_ABC_BANK_POSITION+` | Build the specified model and all downstream dependencies. |
 | `dbt docs generate` | Generate documentation. Build catalog and writes to target\catalog.json|
 | `dbt docs serve` | Host documentation locally. Explore the lineage graph in the docs UI. |
+| `dbt parse` | parses and validates the contents of your dbt project, If your project contains Jinja or YAML syntax errors, the command will fail. |
+| `dbt parse --no-partial-parse` | run parse on whole project from scrtach (not since last update). Generates perf_info.json in target dir|
+| `dbt clone --select state:modified+,config.materialized:incremental,state:old ` | Clone all of the pre-existing incremental models that have been modified or are downstream of another model that has been modified |
 
 ---
 
-Selection examples:
-- Upstream and downstream of model: `--select +model_name+`
-- Exclude upstream+downstream: `--exclude +model_name+`
+
+
+### dbt selection syntax — quick reference
+| Selector | Syntax | Example | Notes |
+|---------:|:------:|:-------:|:-----|
+| name | `--select <name>` | `--select my_model` | Select model/table by name |
+| package | `package:<pkg>` | `--select package:dbt_utils` | Select resources from a package |
+| resource_type | `resource_type:<type>` | `--select resource_type:models` | types: models, seeds, snapshots, tests, sources |
+| path | `path:<dir>` | `--select path:staging/customers` | Files under directory |
+| source | `source:<source>.<table>` | `--select source:raw.*` | Select a source table or all tables in a source |
+| fqn | `fqn:<fully.qualified.name>` | `--select fqn:my_proj.pkg.my_model` | Fully qualified name |
+| tag | `tag:<tag>` | `--select tag:monthly` | Select by tag |
+| config | `config.<key>:<val>` | `--select config.materialized:incremental` | Select nodes with a config key/value eg select all incremental model |
+| test_type | `test_type:<value>` | `--select test_type:singular` | Select tests by type (singular/generic/data) |
+| result | `result:<value>` | `--select result:fail` | select nodes based on last run results |
+| state | `state:<value>` | `--select state:modified` | Nodes whose state changed compared to a previous manifest. Common values: `new`, `modified`, `unchanged`, `old`. Use with `--state` & previous manifest |
+| source_status | `source_status:<val>` | `--select source_status:fresher+` | select models downstream of fresher sources (use after running source freshness). After `dbt source freshness` |
+| named selector | `@<name>` | `--select @team_a` | Reference named selector in selectors.yml entry |
+| db/schema/namespace | `database:<db>` etc. | `--select database:analytics schema:raw` | When using non-default namespaces |
+
+| Operators & combining | Syntax | Example | Notes |
+|:---------------------:|:------:|:-------:|:-----|
+| Upstream | `+node` | `--select +my_model` | immediate parents |
+| Downstream | `node+` | `--select my_model+` | immediate children |
+| Both / hop | `+node+` | `--select +my_model+` | node + one-hop parents & children |
+| Repeat + | `++node++` | expand hops | more hops with more `+` |
+| Intersection (AND) | separate selectors with a space | `--select tag:staging config.materialized:table` | nodes that have both the tag staging AND are materialized as table |
+| Union (OR) | comma-separated | `--select tag:staging,tag:mart` | nodes with either tag |
+| Exclude | `--exclude <selector>` | `--select tag:mart --exclude tag:deprecated` | subtract nodes safely |
+| Trailing + on states | `state:modified+` | `--select state:modified+` | include downstream of state selector |
+
+Examples
+- `dbt run --select tag:monthly+` — monthly models + downstream  
+- `dbt build --select source:raw.orders+ --exclude tag:experimental` — downstream of raw.orders except experimental  
+- `dbt test --select state:modified,tag:CI` — modified OR CI-tagged nodes
+- `dbt run --select @my_team --exclude +@skip_list` — run a named selector but exclude its upstream/downstream as indicated.
+
+Quick tips
+- Prefer named selectors (selectors.yml) for complex reusable selection logic across CI and local runs.  
+- Use `--exclude` for safe subtraction.  
+- Use `source_status:` and `dbt source freshness` together to trigger runs only when sources have fresher data.
+- Use `--state` (and a previous run/manifest) when using `state:` selectors to compare against a baseline.
+- Named selectors and files: use `@name` to refer to selectors.yml entries; you can also compose them (`--select @group_a,tag:x +@group_b`).
+
 
 ---
 
@@ -127,4 +173,6 @@ This will print `Hello from dbt macro!` in your terminal.
 - Constraints are contracts. If constraints fail, models are not materialized.
 - You may want to store or publish the results of the data source freshness check. Capture the result or extract it from the JSON files generated by the execution and publish it.
 - The `source` function allows you to reference a table or view that has not been created by dbt. Source is just made of a metadata definition in a YAML file
+- Sources make it possible to name and describe the data loaded into your warehouse by your Extract and Load tools. Help defines linage of data, test assumptions about source data and calculate freshness of your source data. Using sources unlocks the ability to run source freshness reporting to make sure your raw data isn't stale. Defined in .yml files nested under a sources: key. By default, schema will be the same as name. Add schema only if you want to use a source name that differs from the existing schema
+- It's important that your freshness jobs run frequently enough to snapshot data latency in accordance with your SLAs. EG If your SLA is 1 hour, run source snapshot every 30 minutes. Set source freshness snapshots to 30 minutes to check for source freshness, then run a job which rebuilds every hour to rebuild model. This setup retrieves all the models and rebuild them in one attempt if their source freshness has expired. 
 

@@ -88,3 +88,33 @@ models:
         description: "Date of the customer's most recent order."
       - name: avg_order_value
         description: "Average value of the customer's orders."
+
+  - name: d_customer_inc_merge
+    description: "Dimension table for customer details."
+    config:
+      meta:
+        surrogate_key: true
+  - name: d_customer_inc_del_insert
+    description: "Dimension table for customer details."
+    config:
+      meta:
+        surrogate_key: true
+
+  - name: d_customer_inc_append
+    description: "Dimension table for customer details."
+    config:
+      meta:
+        surrogate_key: true
+
+  - name: d_customer_inc_ins_over
+    description: "Dimension table for customer details."
+    config:
+      meta:
+        surrogate_key: true
+
+  - name: d_customer_inc_microbatch
+    description: "Dimension table for customer details."
+    config:
+      meta:
+        surrogate_key: true
+

@@ -3,7 +3,7 @@ version: 2
 sources:
   - name: invdb
     description: ""
-    database: dbt_dev
+    database: DBT_DEV
     schema: sch_bronze_inventory
     tables:
       - name: inventory_levels

@@ -1,9 +1,12 @@
 {{ config(
-    materialized='table',
+    materialized='view',
     transient=false,
     cluster_by=['id'],
-
-    ) 
+    post_hook = "{{ apply_dynamic_masking_policy(
+        columns=['email','last_name'],
+        masking_policy='plcy_st'
+        ) }}"
+    )
 }}
 
 with source_data as (
@@ -31,5 +34,5 @@ with source_data as (
 
 )
 
-select *
+select *, current_timestamp() as run_ts
 from source_data

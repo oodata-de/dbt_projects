@@ -1,0 +1,5 @@
+version: 2
+
+macros:
+  - name: apply_masking_policy_custom
+    description: '{{ doc("apply_masking_policy_custom") }}'

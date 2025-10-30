@@ -20,12 +20,12 @@
         {% if flags.FULL_REFRESH or model.config.materialized == 'table' %}
         {# regenerate sequences if necessary #}
 
-        create or replace sequence {{ model.database }}.{{ model.schema }}.{{ model.name }}_seq;
+        create or replace sequence {{ model.database }}.{{ model.schema }}.{{ model.name }}_seq start 10 increment 1;
 
         {% else %}
         {# create only if not exists for incremental models #}
-    
-        create sequence if not exists {{ model.database }}.{{ model.schema }}.{{ model.name }}_seq;
+
+        create sequence if not exists {{ model.database }}.{{ model.schema }}.{{ model.name }}_seq start 10 increment 1;
         
         {% endif %}
     

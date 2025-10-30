@@ -40,3 +40,14 @@ models:
         description: "Product category."
       - name: price
         description: "Unit price of the product."
+  
+  - name: d_product_inc_merge
+    config:
+      meta:
+        surrogate_key: true
+
+  - name: df_sales_order_line_inc_merge
+    config:
+      meta:
+        surrogate_key: true
+

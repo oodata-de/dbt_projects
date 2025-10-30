@@ -3,14 +3,17 @@ version: 2
 sources:
   - name: salesdb
     description: ""
-    database: dbt_dev
+    database: DBT_DEV
     schema: sch_bronze_sales
-    freshness: 
-      warn_after: {count: 1, period: day}
-    loaded_at_field: created_date
+    config:
+      freshness: 
+        warn_after: {count: 1, period: day}
+      loaded_at_field: _el_timestamp
     tables:
       - name: orders
         description: ""
+        config:
+          freshness: null # do not check freshness for this table
       - name: customers
         description: ""
         tests:
