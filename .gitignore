@@ -9,3 +9,5 @@
 **/setup.ps1
 **/.user.yml
 **/package-lock.yml
+
+.dlt

@@ -14,3 +14,9 @@ sources:
       - name: r2
       - name: r3
       - name: r4
+
+  - name: dlt
+    database: DBT_DEV
+    schema: sch_dlt_test
+    tables:
+      - name: r2

@@ -36,7 +36,7 @@ To make these changes persistent, add the lines to your PowerShell profile scrip
 | `dbt deps` | Install dependencies/packages; run at the beginning of pipeline. pulls the most recent version of the dependencies listed in your packages.yml from git. dbt generates a package-lock.yml file in the root of your project. This file records the exact resolved versions (including commit SHAs) of all packages defined in your packages.yml. The package-lock.yml file ensures consistent and repeatable installs across all environments. When you run dbt deps, dbt installs packages based on the versions locked in the package-lock.yml. To maintain consistency, commit the package-lock.yml file to version control. This guarantees consistency across all environments and for all developers|
 | `dbt deps --upgrade` | manually trigger an upgrade of installed packages. This may introduce build inconsistencies unless carefully managed |
 | `dbt deps --add-package dbt-labs/dbt_utils@1.0.0` | add package directly with CLI |
-| `dbt source freshness` | Check freshness of source models. Behind the scenes, dbt uses the freshness properties to construct a select query|
+| `dbt source freshness --select source:dependency` | Check freshness of source models. Behind the scenes, dbt uses the freshness properties to construct a select query|
 | `dbt seed` | Load seed files to tables, by default, data will be loaded in a table with the same name as the CSV file |
 | `dbt seed --full-refresh` | Reload all seed files, drop and recreate existing tables. |
 | `dbt run` | Run all models. |
@@ -77,16 +77,18 @@ To make these changes persistent, add the lines to your PowerShell profile scrip
 | package | `package:<pkg>` | `--select package:dbt_utils` | Select resources from a package |
 | resource_type | `resource_type:<type>` | `--select resource_type:models` | types: models, seeds, snapshots, tests, sources |
 | path | `path:<dir>` | `--select path:staging/customers` | Files under directory |
-| source | `source:<source>.<table>` | `--select source:raw.*` | Select a source table or all tables in a source |
+| source | `source:<source>.<table>` | `--select source:raw+` | Run all models that select from raw sources |
 | fqn | `fqn:<fully.qualified.name>` | `--select fqn:my_proj.pkg.my_model` | Fully qualified name |
 | tag | `tag:<tag>` | `--select tag:monthly` | Select by tag |
+| group | `group:<group>` | `--select "group:finance"` | Select models defined within a group, can be set on config block - group='GROUP_NAME' |
 | config | `config.<key>:<val>` | `--select config.materialized:incremental` | Select nodes with a config key/value eg select all incremental model |
 | test_type | `test_type:<value>` | `--select test_type:singular` | Select tests by type (singular/generic/data) |
-| result | `result:<value>` | `--select result:fail` | select nodes based on last run results |
+| result | `result:<value>` | `--select result:fail --state path/to/artifacts ` | select nodes based on last run results. Values: `error`, `success`, `skipped`, `fail`, `warn`, `pass`. [`run`, `test`, `build`, `seed`] must have been performed in order to create the result on which a result selector operates  |
 | state | `state:<value>` | `--select state:modified` | Nodes whose state changed compared to a previous manifest. Common values: `new`, `modified`, `unchanged`, `old`. Use with `--state` & previous manifest |
-| source_status | `source_status:<val>` | `--select source_status:fresher+` | select models downstream of fresher sources (use after running source freshness). After `dbt source freshness` |
+| source_status | `source_status:<val>` | `--select source_status:fresher+ --state path/to/prod/artifacts` | select models downstream of fresher sources (use after running source freshness). After `dbt source freshness`. signal dbt to run and test only on the fresher sources and their children |
 | named selector | `@<name>` | `--select @team_a` | Reference named selector in selectors.yml entry |
 | db/schema/namespace | `database:<db>` etc. | `--select database:analytics schema:raw` | When using non-default namespaces |
+
 
 | Operators & combining | Syntax | Example | Notes |
 |:---------------------:|:------:|:-------:|:-----|
@@ -104,6 +106,8 @@ Examples
 - `dbt build --select source:raw.orders+ --exclude tag:experimental` — downstream of raw.orders except experimental  
 - `dbt test --select state:modified,tag:CI` — modified OR CI-tagged nodes
 - `dbt run --select @my_team --exclude +@skip_list` — run a named selector but exclude its upstream/downstream as indicated.
+- `dbt run --select "result:<status>+" state:modified+ --defer --state ./<dbt-artifact-path>` - tate and result selectors can also be combined in a single invocation of dbt to capture errors from a previous run OR any new or modified models.
+- `dbt build --select "1+result:fail+" --state path/to/artifacts` reruns the models associated with failed tests and all downstream dependencies
 
 Quick tips
 - Prefer named selectors (selectors.yml) for complex reusable selection logic across CI and local runs.  
@@ -111,6 +115,7 @@ Quick tips
 - Use `source_status:` and `dbt source freshness` together to trigger runs only when sources have fresher data.
 - Use `--state` (and a previous run/manifest) when using `state:` selectors to compare against a baseline.
 - Named selectors and files: use `@name` to refer to selectors.yml entries; you can also compose them (`--select @group_a,tag:x +@group_b`).
+- dbt overwrites the manifest.json file during parsing, which means when you reference --state from the target/ directory, you may encounter a warning indicating that the saved manifest wasn't found. Avoid setting --state and --target-path to the same path with state-dependent features like --defer and state:modified as it can lead to non-idempotent behavior and won't work as expected
 
 
 ---

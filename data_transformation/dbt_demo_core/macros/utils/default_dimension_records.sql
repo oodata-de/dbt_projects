@@ -31,4 +31,5 @@
         {% do select_statements.extend([select_stmt]) %}
     {% endfor %}
     {{ select_statements | join('\nUNION ALL\n') }}
+    
 {% endmacro %}
