@@ -1,6 +1,7 @@
 selectors:
-  - name: sales_fact_nodes
+  - name: dependency_fact
     definition:
       union:
         - method: path
           value: "models/example/dependency/facts/"
+          parents: true

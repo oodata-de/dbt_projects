@@ -1,0 +1,8 @@
+sources:
+  - name: pro
+    database: bench_db
+    schema: processing
+    tables:
+      - name: f_source1
+      - name: f_source2
+      - name: f_source3
