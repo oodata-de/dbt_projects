@@ -1,0 +1,88 @@
+
+version: 2
+
+models:
+  - name: my_first_dbt_model
+    description: "A starter dbt model"
+    columns:
+      - name: id
+        description: "The primary key for this table"
+        data_tests:
+          - unique
+          - not_null
+
+  - name: my_second_dbt_model
+    description: "A starter dbt model"
+    columns:
+      - name: id
+        description: "The primary key for this table"
+        data_tests:
+          - unique
+          - not_null
+
+  - name: pii_dbt_snow_package_incremental
+    description: "A model containing PII data"
+    columns:
+      - name: id
+        description: "The primary key for this table"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: first_name
+        description: "Given name"
+        meta:
+          masking_policy: plcy_sch_dbt_test_st
+
+      - name: last_name
+        description: "Family name"
+        meta:
+          masking_policy: plcy_sch_dbt_test_st
+
+      - name: email
+        description: "Email address"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: country
+        description: "Country of residence"
+
+      - name: signup_date
+        description: "Signup date"
+
+  - name: pii_dbt_snow_package
+    description: "A model containing PII data"
+    columns:
+      - name: id
+        description: "The primary key for this table"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: first_name
+        description: "Person First Name"
+        meta:
+          masking_policy: plcy_sch_dbt_test_st
+
+      - name: last_name
+        meta:
+          masking_policy: plcy_sch_dbt_test_st  
+
+
+
+  - name: pii_model_custom
+    description: "A model containing PII data"
+    config:
+      tags: ['pii']
+    columns:
+      - name: email
+        description: "Email address"
+        meta:
+          masking_policy: plcy_st
+
+  - name: pii_model_apply_masking
+    description: "A model containing PII data"
+    columns:
+      - name: first_name
+

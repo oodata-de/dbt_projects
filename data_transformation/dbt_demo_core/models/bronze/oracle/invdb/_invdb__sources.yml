@@ -1,0 +1,12 @@
+version: 2
+
+sources:
+  - name: invdb
+    description: ""
+    database: DBT_DEV
+    schema: sch_bronze_inventory
+    tables:
+      - name: inventory_levels
+        description: ""
+      - name: inventory_transactions
+        description: ""

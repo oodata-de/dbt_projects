@@ -1,0 +1,120 @@
+version: 2
+
+models:
+  - name: agg_customer_insights
+    description: "Aggregated customer insights for analytics."
+    columns:
+      - name: customer_id
+        description: "Unique identifier for the customer."
+      - name: total_orders
+        description: "Total number of orders placed by the customer."
+      - name: total_spent
+        description: "Total amount spent by the customer."
+      - name: avg_order_value
+        description: "Average value of the customer's orders."
+
+  - name: br_customer_address
+    description: "Bridge table linking customers to addresses."
+    columns:
+      - name: customer_id
+        description: "Unique identifier for the customer."
+      - name: address_id
+        description: "Unique identifier for the address."
+
+  - name: d_address
+    description: "Dimension table for address details."
+    columns:
+      - name: address_id
+        description: "Unique identifier for the address."
+      - name: street
+        description: "Street address."
+      - name: city
+        description: "City of the address."
+      - name: country
+        description: "Country of the address."
+
+  - name: d_customer
+    description: "Dimension table for customer details."
+    columns:
+      - name: customer_id
+        description: "Unique identifier for the customer."
+      - name: first_name
+        description: "First name of the customer."
+      - name: last_name
+        description: "Last name of the customer."
+      - name: country
+        description: "Country of the customer."
+    config:
+      meta:
+        surrogate_key: true
+
+  - name: d_customer_audit
+    description: "Customer detail table built from audit pattern."
+    columns:
+      - name: customer_sid
+        description: "Surrogate key for the customer audit table."
+        tests:
+          - not_null
+      - name: customer_id
+        description: "Unique identifier for the customer."
+      - name: first_name
+        description: "First name of the customer."
+      - name: last_name
+        description: "Last name of the customer."
+      - name: country
+        description: "Country of the customer."
+    config:
+      meta:
+        surrogate_key: true
+
+  - name: f_customer_insights
+    description: "Fact table for customer insights and analytics."
+    columns:
+      - name: customer_id
+        description: "Unique identifier for the customer."
+      - name: first_name
+        description: "First name of the customer."
+      - name: last_name
+        description: "Last name of the customer."
+      - name: country
+        description: "Country of the customer."
+      - name: total_orders
+        description: "Total number of distinct orders placed by the customer."
+      - name: total_spent
+        description: "Total amount spent by the customer."
+      - name: first_order_date
+        description: "Date of the customer's first order."
+      - name: last_order_date
+        description: "Date of the customer's most recent order."
+      - name: avg_order_value
+        description: "Average value of the customer's orders."
+
+  - name: d_customer_inc_merge
+    description: "Dimension table for customer details."
+    config:
+      meta:
+        surrogate_key: true
+  - name: d_customer_inc_del_insert
+    description: "Dimension table for customer details."
+    config:
+      meta:
+        surrogate_key: true
+
+  - name: d_customer_inc_append
+    description: "Dimension table for customer details."
+    config:
+      meta:
+        surrogate_key: true
+
+  - name: d_customer_inc_ins_over
+    description: "Dimension table for customer details."
+    config:
+      meta:
+        surrogate_key: true
+
+  - name: d_customer_inc_microbatch
+    description: "Dimension table for customer details."
+    config:
+      meta:
+        surrogate_key: true
+

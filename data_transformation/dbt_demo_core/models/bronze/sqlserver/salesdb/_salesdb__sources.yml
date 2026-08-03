@@ -1,0 +1,27 @@
+version: 2
+
+sources:
+  - name: salesdb
+    description: ""
+    database: DBT_DEV
+    schema: sch_bronze_sales
+    config:
+      freshness: 
+        warn_after: {count: 1, period: day}
+      loaded_at_field: _el_timestamp
+    tables:
+      - name: orders
+        description: ""
+        config:
+          freshness: null # do not check freshness for this table
+      - name: customers
+        description: ""
+        tests:
+          - unique:
+              column_name: customer_id
+          - not_null:
+              column_name: first_name
+      - name: products
+        description: ""
+      - name: addresses
+        description: ""

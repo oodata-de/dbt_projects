@@ -1,0 +1,7 @@
+selectors:
+  - name: dependency_fact
+    definition:
+      union:
+        - method: path
+          value: "models/example/dependency/facts/"
+          parents: true

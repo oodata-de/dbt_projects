@@ -1,0 +1,53 @@
+version: 2
+
+models:
+  - name: f_sales_order_line
+    description: "Fact table for individual sales order lines."
+    columns:
+      - name: order_line_id
+        description: "Unique identifier for the sales order line."
+      - name: order_id
+        description: "Unique identifier for the sales order."
+      - name: product_id
+        description: "Unique identifier for the product."
+      - name: quantity
+        description: "Quantity of product sold in this line."
+      - name: amount
+        description: "Total amount for this order line."
+
+  - name: d_date
+    description: "Date dimension table."
+    columns:
+      - name: date_id
+        description: "Unique identifier for the date."
+      - name: date
+        description: "Calendar date."
+      - name: year
+        description: "Year component of the date."
+      - name: month
+        description: "Month component of the date."
+      - name: day
+        description: "Day component of the date."
+
+  - name: d_product
+    description: "Product dimension table."
+    columns:
+      - name: product_id
+        description: "Unique identifier for the product."
+      - name: product_name
+        description: "Name of the product."
+      - name: category
+        description: "Product category."
+      - name: price
+        description: "Unit price of the product."
+  
+  - name: d_product_inc_merge
+    config:
+      meta:
+        surrogate_key: true
+
+  - name: df_sales_order_line_inc_merge
+    config:
+      meta:
+        surrogate_key: true
+

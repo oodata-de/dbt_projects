@@ -1,0 +1,9 @@
+groups:
+  - name: sales
+    owner:
+      # 'name' or 'email' is required; additional properties will no longer be allowed in a future release
+      email: sales@jaffleshop.com
+    description: For the sales team # optional
+    config:
+      meta: # optional
+        data_owner: Sales team

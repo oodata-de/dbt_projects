@@ -1,0 +1,81 @@
+USE ROLE USERADMIN;
+CREATE ROLE DBT_EXECUTOR_ROLE
+  COMMENT = 'Role for the users running DBT models';
+
+USE ROLE SYSADMIN;
+GRANT CREATE DATABASE ON ACCOUNT TO ROLE DBT_EXECUTOR_ROLE;
+GRANT USAGE ON WAREHOUSE COMPUTE_WH TO ROLE DBT_EXECUTOR_ROLE;
+
+GRANT ROLE DBT_EXECUTOR_ROLE TO USER DECLOUD4;
+USE ROLE DBT_EXECUTOR_ROLE;
+CREATE DATABASE DATA_ENG_DBT;
+
+USE ROLE SYSADMIN; -- To alter the warehouse, you must switch to the SYSADMIN user as it is the role that owns the warehouse
+ALTER WAREHOUSE "COMPUTE_WH" SET
+    WAREHOUSE_SIZE = 'XSMALL'
+    AUTO_SUSPEND = 60
+    AUTO_RESUME = TRUE
+    COMMENT = 'Default Warehouse';
+
+USE ROLE USERADMIN;
+CREATE USER IF NOT EXISTS DBT_EXECUTOR
+    COMMENT = 'User running DBT commands'
+    PASSWORD = 'XXXXXX'
+    DEFAULT_WAREHOUSE = 'COMPUTE_WH'
+    DEFAULT_ROLE = 'DBT_EXECUTOR_ROLE'
+;
+GRANT ROLE DBT_EXECUTOR_ROLE TO USER DBT_EXECUTOR;
+
+USE ROLE DBT_EXECUTOR_ROLE;
+CREATE DATABASE PORTFOLIO_TRACKING
+    COMMENT = 'DB for the portfolio tracking project';
+CREATE SCHEMA PORTFOLIO_TRACKING.SOURCE_DATA;
+CREATE OR REPLACE TABLE PORTFOLIO_TRACKING.SOURCE_DATA.ABC_BANK_POSITION (
+    accountID         TEXT,
+    symbol            TEXT,
+    description       TEXT,
+    exchange          TEXT,
+    report_date       DATE,
+    quantity          NUMBER(38,0),
+    cost_base         NUMBER(38,5),
+    position_value    NUMBER(38,5),
+    currency          TEXT
+);
+
+CREATE FILE FORMAT
+  PORTFOLIO_TRACKING.SOURCE_DATA.ABC_BANK_CSV_FILE_FORMAT
+    TYPE = 'CSV'
+        COMPRESSION = 'AUTO'
+        FIELD_DELIMITER = ','
+        RECORD_DELIMITER = '\n' --how a row is terminated
+        SKIP_HEADER = 1
+        FIELD_OPTIONALLY_ENCLOSED_BY = '\042' -- specifies string-type columns that can be optionally enclosed in double quotes. needed if they contain characters with special meaning, such as the delimiters
+        TRIM_SPACE = FALSE
+        ERROR_ON_COLUMN_COUNT_MISMATCH = TRUE
+        ESCAPE = 'NONE'
+        ESCAPE_UNENCLOSED_FIELD = '\134'
+        DATE_FORMAT = 'AUTO'
+        TIMESTAMP_FORMAT = 'AUTO'
+        NULL_IF = ('\\N')
+;
+
+SELECT
+      ', ' || COLUMN_NAME || ' as '|| COLUMN_NAME
+                || ' -- ' || DATA_TYPE as SQL_TEXT
+FROM PORTFOLIO_TRACKING.INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_SCHEMA = 'SOURCE_DATA'
+ and TABLE_NAME = 'ABC_BANK_POSITION'
+ORDER BY ORDINAL_POSITION
+
+SELECT
+    CASE DATA_TYPE
+        WHEN 'TEXT' THEN IFF(ENDSWITH(COLUMN_NAME,'_CODE'), ', ''-1''', ', ''Missing''')
+        WHEN 'NUMBER' THEN ', -1'
+        WHEN 'DATE' THEN ', ''2000-01-01'''
+        WHEN 'TIMESTAMP_NTZ' THEN ', ''2000-01-01'''
+        ELSE ', ''Missing'''
+    END  || ' as ' || COLUMN_NAME as SQL_TEXT
+FROM "PORTFOLIO_TRACKING"."INFORMATION_SCHEMA"."COLUMNS"
+WHERE TABLE_SCHEMA = 'SCH_OO_DBT_STAGING'
+ and TABLE_NAME = 'STG_ABC_BANK_POSITION'
+ORDER BY ORDINAL_POSITION;
