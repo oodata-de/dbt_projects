@@ -77,7 +77,7 @@ To make these changes persistent, add the lines to your PowerShell profile scrip
 | name | `--select <name>` | `--select my_model` | Select model/table by name |
 | package | `package:<pkg>` | `--select package:dbt_utils` | Select resources from a package |
 | resource_type | `resource_type:<type>` | `--select resource_type:models` | types: models, seeds, snapshots, tests, sources |
-| path | `path:<dir>` | `--select path:staging/customers` | Files under directory |
+| path | `path:<dir>` | `--select path:staging/customers`  `dbt run --select path:models\example\dependency` | Files under directory |
 | source | `source:<source>.<table>` | `--select source:raw+` | Run all models that select from raw sources |
 | fqn | `fqn:<fully.qualified.name>` | `--select fqn:my_proj.pkg.my_model` | Fully qualified name |
 | tag | `tag:<tag>` | `--select tag:monthly` | Select by tag. |
@@ -110,6 +110,7 @@ Examples
 - `dbt run --select @ model` - @model means “the model and its entire family (all parents and children).”
 - `dbt run --select "result:<status>+" state:modified+ --defer --state ./<dbt-artifact-path>` - tate and result selectors can also be combined in a single invocation of dbt to capture errors from a previous run OR any new or modified models.
 - `dbt build --select "1+result:fail+" --state path/to/artifacts` reruns the models associated with failed tests and all downstream dependencies
+- `dbt build --select state:modified+1 --fail-fast` Runs the changed model and its immediate children only; fail-fast stops pipeline immediately upon the first error (saves compute credits and forces developers to own their data quality before the code ever leaves their branch.). Patterns should be used in CI
 
 Quick tips
 - Prefer named selectors (selectors.yml) for complex reusable selection logic across CI and local runs.  
@@ -169,9 +170,49 @@ This will print `Hello from dbt macro!` in your terminal.
 
 ---
 
+# dbt Key Context Variables Documentation
+ execution: dbt compile, dbt run. On this commands, dbt first parses/compiles and then it executes. dbt actually runs SQL and builds models
+ * database connection (e.g., via run_query, adapter, or execute blocks) should only be accessed inside of a dbt execution context (like in a macro called from a context where execute is True)
+
+ compilation: dbt parse. Parsing is when dbt reads project files, dbt identifies every use of ref() and source() to build the DAG, but doesn’t resolve them to actual database identifiers. Instead, it replaces each with a placeholder value to ensure the SQL compiles cleanly during parsing, identifies macro definitions, builds DAG; execute == False. Any Jinja that relies on a result being returned from the database will error during the parse phase. By setting if execute(), it means the code will not be parsed during this phase. 
+ 
+ * Code like select from ref (); set results = run_query() and then set methods = results.columns[0].values() will error out because we assume the query has been run and a table returned
+ * Macros like log() and exceptions.warn() are still evaluated at parse time
+ * Checks on relations should be in execute block to make sure checks run when dbt is running the code not just preparing it
+ * post-hooks are executed in a context where some variables (like model, graph, etc.) are not available. These objects are only available during parsing or when rendering a model file, not in hooks.
+ 
+ 
+ 
+
+
+| Variable/Macro           | Available When                        | Purpose                                                                                      |
+|--------------------------|---------------------------------------|----------------------------------------------------------------------------------------------|
+| `{{ execute }}`          | Always in SQL models/macros           | Boolean indicating if SQL is currently being executed (`True` during execution, `False` during compilation). |
+| `{{ ref(...) }}`         | Compilation & Execution               | References other dbt models; resolves to the correct table/view name in the target schema.   |
+| `{{ source(...) }}`      | Compilation & Execution               | References source tables defined in YAML files.                                              |
+| `{{ this }}`             | Execution (in models)                 | A relation object representing the current model being built. The {{ this }} variable represents a Relation object pointing at the model being compiled (includes database, schema, identifier). |
+| `{{ is_incremental() }}` | Execution (in incremental models)     | Returns `True` if the current model is running incrementally, `False` otherwise (e.g., during a `dbt run --full-refresh`). |
+| `{{ flags }}`            | Always (global configs)               | Access to global dbt flags/configurations passed via the CLI or `dbt_project.yml`.           |
+| `{{ invocation_args_dict }}` | Always                           | Dictionary of all arguments passed from the CLI for the current invocation.                  |
+| `{{ results }}`          | `on-run-end` hooks only               | Contains the results of the dbt run (e.g., test outcomes, model statuses).                   |
+| `{{ database_schemas }}` | `on-run-end` hooks only               | References the databases and schemas where models were built during the run.                 |
+| `{{ var(...) }}`         | Compilation & Execution (most places) | Accesses project variables defined in `dbt_project.yml` or passed via the CLI.               |
+| `{{ env_var(...) }}`     | Compilation & Execution (most places) | Accesses environment variables from the system.                                              |
+
+## Additional Notes
+- Some variables (like `this`, `is_incremental()`) are only available during execution, not during compilation.
+- `flags` and `invocation_args_dict` are always available, providing access to global and invocation-specific settings.
+- `results` and `database_schemas` are only available in `on-run-end` hooks, useful for post-run analysis or reporting.
+- Use `ref` and `source` for dependency management and referencing within your dbt project.
+
+
+
+---
+
 ## Automation
 
-- Pre and Post tasks
+- Pre and Post hooks
+
 
 ---
 
@@ -184,3 +225,26 @@ This will print `Hello from dbt macro!` in your terminal.
 - Sources make it possible to name and describe the data loaded into your warehouse by your Extract and Load tools. Help defines linage of data, test assumptions about source data and calculate freshness of your source data. Using sources unlocks the ability to run source freshness reporting to make sure your raw data isn't stale. Defined in .yml files nested under a sources: key. By default, schema will be the same as name. Add schema only if you want to use a source name that differs from the existing schema
 - It's important that your freshness jobs run frequently enough to snapshot data latency in accordance with your SLAs. EG If your SLA is 1 hour, run source snapshot every 30 minutes. Set source freshness snapshots to 30 minutes to check for source freshness, then run a job which rebuilds every hour to rebuild model. This setup retrieves all the models and rebuild them in one attempt if their source freshness has expired. 
 
+### env_var function
+- used to incorporate environment variables from the system into your dbt project. Can be used in profiles, dbt_project, sources, schema.yml and model .sql files. 
+```sql
+profile:
+  target: prod
+  outputs:
+    prod:
+      # IMPORTANT: Make sure to quote the entire Jinja string here
+      user: "{{ env_var('DBT_USER') }}"
+      password: "{{ env_var('DBT_PASSWORD') }}"
+      ....
+```
+
+
+---
+
+### Working with jinja
+
+`{{- ... -}}` trims spaces around expressions.
+`{%- ... -%}` trims around statements (loops, if).
+`-%}` trims the space/newline before the closing tag; `{{-` trims after opening. Apply to loops/blocks wrapping SQL to remove leading blank lines.
+
+---

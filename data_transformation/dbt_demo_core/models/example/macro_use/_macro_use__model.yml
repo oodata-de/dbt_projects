@@ -1,0 +1,53 @@
+
+version: 2
+
+models:
+  - name: test_macro_meta
+    columns:
+      - name: full_path
+        description: "The full relation path for the model"
+        data_type: string
+      - name: schema_name
+        description: "The schema name of the model"
+        data_type: string
+      - name: db_name
+        description: "The database name of the model"
+        data_type: string
+      - name: table_name
+        description: "The table name of the model"
+        data_type: string
+      - name: identifier
+        description: "The identifier of the model"
+        data_type: varchar(500)
+      - name: relation_type
+        description: "The relation type of the model"
+        data_type: string
+      - name: run_ts
+        description: "The timestamp when the model was run"
+        data_type: timestamp
+
+  - name: test_macro_default_dims
+    columns:
+      - name: table_sid
+        data_type: integer
+      - name: full_path
+        description: "The full relation path for the model"
+        data_type: string
+      - name: schema_name
+        description: "The schema name of the model"
+        data_type: string
+      - name: db_name
+        description: "The database name of the model"
+        data_type: varchar(2)
+      - name: table_name
+        description: "The table name of the model"
+        data_type: string
+      - name: identifier
+        description: "The identifier of the model"
+        data_type: varchar(10)
+      - name: relation_type
+        description: "The relation type of the model"
+        data_type: string
+      - name: run_ts
+        description: "The timestamp when the model was run"
+        data_type: timestamp
